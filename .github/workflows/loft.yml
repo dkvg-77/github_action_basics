@@ -19,8 +19,9 @@ jobs:
 
       - name: Download Loft
         run: |
-          curl -fsSLk https://downloads.loft.sh/cli/install.sh | bash
-          echo "$HOME/.loft/bin" >> $GITHUB_PATH 
+          curl -L -o loft "https://github.com/loft-sh/loft/releases/latest/download/loft-linux-amd64" 
+          chmod +x loft
+          sudo install -c -m 0755 loft /usr/local/bin
 
       - name: Verify Loft Version
         run: loft --version
