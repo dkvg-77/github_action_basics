@@ -1,0 +1,26 @@
+name: Check Loft Version
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check-loft-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Loft
+        run: |
+          curl -fsSL https://downloads.loft.sh/cli/install.sh | bash
+          echo "$HOME/.loft/bin" >> $GITHUB_PATH
+
+      - name: Verify Loft Version
+        run: loft --version
