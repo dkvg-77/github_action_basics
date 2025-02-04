@@ -19,8 +19,8 @@ jobs:
 
       - name: Download Loft
         run: |
-          curl -fsSL https://downloads.loft.sh/cli/install.sh | bash
-          echo "$HOME/.loft/bin" >> $GITHUB_PATH
+          curl -fsSLk https://downloads.loft.sh/cli/install.sh | bash
+          echo "$HOME/.loft/bin" >> $GITHUB_PATH 
 
       - name: Verify Loft Version
         run: loft --version
