@@ -17,11 +17,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download Loft
+      - name: Debug Loft Download
         run: |
-          curl -L -o loft "https://github.com/loft-sh/loft/releases/latest/download/loft-linux-amd64" 
+          curl -L -v -o loft "https://github.com/loft-sh/loft/releases/latest/download/loft-linux-amd64"
+          ls -lh loft
+          file loft
           chmod +x loft
           sudo install -c -m 0755 loft /usr/local/bin
+
 
       - name: Verify Loft Version
         run: loft --version
