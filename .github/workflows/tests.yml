@@ -45,8 +45,27 @@ jobs:
 
           echo "❌ ERROR: Max retries reached. Commit ID did not match the revision."
           exit 1
+  run-integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Java SDK Repo
+        uses: actions/checkout@v4
+        with:
+          repository: atlanhq/atlan-java
+          ref: main
 
+      - name: Set up JDK for SDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Compile
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          arguments: assemble shadowJar test
   integration-test:
+    needs: run-integration-tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
