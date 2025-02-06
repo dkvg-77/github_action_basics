@@ -1,0 +1,94 @@
+name: Integration Tests for Metastore
+
+on:
+  push:
+    branches:
+      - alpha
+      - beta
+      - development
+      - master
+      - lineageondemand
+      - makerlogic
+      - mlh41-integration-tests
+
+jobs:
+
+  run-integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Java SDK Repo
+        uses: actions/checkout@v4
+        with:
+          repository: atlanhq/atlan-java
+          ref: main
+          path: atlan-java  # <-- CHANGED: Specify path so it does not checkout into the default directory
+
+      - name: Set up JDK for SDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Compile
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          arguments: assemble shadowJar test
+
+  list-integration-tests:
+    runs-on: ubuntu-latest
+    outputs:
+      tests: ${{ steps.test-files.outputs.tests }}
+    steps:
+      - name: Checkout Java SDK Repo
+        uses: actions/checkout@v4
+        with:
+          repository: atlanhq/atlan-java
+          ref: main
+          path: atlan-java  # <-- CHANGED: Specify path to ensure correct directory structure
+
+      - name: List integration tests
+        id: test-files
+        run: |
+          tests=$(ls integration-tests/src/test/java/com/atlan/java/sdk/Test.java | sed -E 's|./src/test/java/com/atlan/java/sdk/||; s|/|.|g; s|\.java$||' | tr '\n' ' ')
+          json_tests=$(echo "$tests[@]}" | jq -R -c 'split(" ")[:-1]')
+          echo "tests=$json_tests" >> $GITHUB_OUTPUT
+  integration-test:
+    needs:
+      - run-integration-tests
+      - list-integration-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tests: ${{ fromJson(needs.list-integration-tests.outputs.tests) }}
+    concurrency:
+      group: ${{ matrix.tests }}
+    name: "Integration"
+    steps:
+      - name: Checkout Java SDK Repo
+        uses: actions/checkout@v4
+        with:
+          repository: atlanhq/atlan-java
+          ref: main
+          path: atlan-java  # <-- CHANGED: Ensure checkout into correct directory
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Integration tests
+        uses: burrunan/gradle-cache-action@v1
+        env:
+          ATLAN_BASE_URL: ${{ secrets.ATLAN_BASE_URL }}
+          ATLAN_API_KEY: ${{ secrets.TENANT_API_KEY }}
+        with:
+          arguments: -PintegrationTests integration-tests:test --tests "com.atlan.java.sdk.${{ matrix.tests }}"
+          working-directory: atlan-java  # <-- CHANGED: Ensure Gradle runs in the correct repo
+
+      - if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.tests }}
+          path: atlan-java/integration-tests/${{ matrix.tests }}.log  # <-- CHANGED: Corrected log path
