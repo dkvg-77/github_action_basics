@@ -70,10 +70,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tests: ["AtlanLiveTest", "ModelTest", "ConnectionTest"]  # Add multiple test files here
-    concurrency:
-      group: ${{ matrix.tests }}
-    name: "Integration"
+        tests: ["ModelTest", "AdminTest", "APIAssetTest"]  # <-- Manually define tests
+    name: "Integration - ${{ matrix.tests }}"
     steps:
       - name: Checkout Java SDK Repo
         uses: actions/checkout@v4
@@ -87,7 +85,7 @@ jobs:
           java-version: 17
           distribution: temurin
 
-      - name: Run Selected Integration Tests
+      - name: Run Integration Tests
         uses: burrunan/gradle-cache-action@v1
         env:
           ATLAN_BASE_URL: "https://gcpotel.atlan.com/"
@@ -95,11 +93,24 @@ jobs:
         with:
           arguments: -PintegrationTests integration-tests:test --tests "com.atlan.java.sdk.${{ matrix.tests }}"
 
-      - if: success() || failure()
+      - name: Ensure Log Directory Exists
+        run: mkdir -p test-results
+
+      - name: Move Logs to Test Results Directory
+        run: |
+          if [ -f integration-tests/${{ matrix.tests }}.log ]; then
+            mv integration-tests/${{ matrix.tests }}.log test-results/${{ matrix.tests }}.log
+          else
+            echo "No log file found for ${{ matrix.tests }}"
+            touch test-results/${{ matrix.tests }}-missing.log
+          fi
+
+      - name: Upload Test Logs
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.tests }}
-          path: integration-tests/${{ matrix.tests }}.log
+          name: integration-test-logs
+          path: test-results/
 
   report-test-results:
     needs: integration-test
