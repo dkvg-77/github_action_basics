@@ -122,4 +122,43 @@ jobs:
           name: ${{ matrix.tests }}
           path: integration-tests/${{ matrix.tests }}.log
 
+  report-test-results:
+    needs: integration-test
+    if: always()  # Run this even if tests fail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
 
+      - name: Collect Failed Tests
+        id: collect-failures
+        run: |
+          echo "### Integration Test Results" >> test-summary.md
+          echo "" >> test-summary.md
+          
+          failed_tests=""
+          for file in test-results/*; do
+            if grep -q "FAILED" "$file"; then
+              failed_tests+="$(basename $file .log)\n"
+            fi
+          done
+
+          if [[ -n "$failed_tests" ]]; then
+            echo "❌ **Some tests failed.** Please check the following tests:" >> test-summary.md
+            echo "\n\`\`\`" >> test-summary.md
+            echo -e "$failed_tests" >> test-summary.md
+            echo "\n\`\`\`" >> test-summary.md
+            echo "ALL_TESTS_PASSED=false" >> $GITHUB_ENV
+          else
+            echo "✅ **All integration tests passed!** Ready to merge. 🚀" >> test-summary.md
+            echo "ALL_TESTS_PASSED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Post Comment on PR
+        uses: mshick/add-pr-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          message-path: test-summary.md
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
