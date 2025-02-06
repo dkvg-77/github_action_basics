@@ -149,7 +149,12 @@ jobs:
             echo "✅ **All integration tests passed!** Ready to merge. 🚀" >> test-summary.md
             echo "ALL_TESTS_PASSED=true" >> $GITHUB_ENV
           fi
-
+      - name: Output Test Summary to Logs
+        run: |
+          echo "--------------------------------------------------"
+          echo "✅ Printing the test summary before posting to PR"
+          echo "--------------------------------------------------"
+          cat test-summary.md  # This prints the content of test-summary.md into the GitHub Actions logs
 
       - name: Post Comment on PR
         uses: mshick/add-pr-comment@v2
