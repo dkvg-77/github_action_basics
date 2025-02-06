@@ -13,13 +13,14 @@ jobs:
 
   run-integration-tests:
     runs-on: ubuntu-latest
+    #    needs: build
     steps:
       - name: Checkout Java SDK Repo
         uses: actions/checkout@v4
         with:
           repository: atlanhq/atlan-java
           ref: main
-          
+
       - name: Set up JDK for SDK
         uses: actions/setup-java@v4
         with:
@@ -32,6 +33,7 @@ jobs:
           arguments: assemble shadowJar test
 
   list-integration-tests:
+    #    needs: run-integration-tests
     runs-on: ubuntu-latest
     outputs:
       tests: ${{ steps.test-files.outputs.tests }}
@@ -41,11 +43,11 @@ jobs:
         with:
           repository: atlanhq/atlan-java
           ref: main
-          
+
       - name: List integration tests
         id: test-files
         run: |
-          tests=$(ls integration-tests/src/test/java/com/atlan/java/sdk/Test.java | sed -E 's|./src/test/java/com/atlan/java/sdk/||; s|/|.|g; s|\.java$||' | tr '\n' ' ')
+          tests=$(ls integration-tests/src/test/java/com/atlan/java/sdk/*Test.java | sed -E 's|.*/src/test/java/com/atlan/java/sdk/||; s|/|.|g; s|\.java$||' | tr '\n' ' ')
           json_tests=$(echo "$tests[@]}" | jq -R -c 'split(" ")[:-1]')
           echo "tests=$json_tests" >> $GITHUB_OUTPUT
   integration-test:
