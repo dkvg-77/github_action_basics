@@ -10,10 +10,44 @@ on:
   workflow_dispatch:
 
 jobs:
+  wait-for-revision:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get commit ID
+        run: echo "COMMIT_ID=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Wait for Matching Revision
+        run: |
+          MAX_RETRIES=30  # Set maximum number of retries
+          SLEEP_TIME=10  # Time in seconds between retries
+
+          for i in $(seq 1 $MAX_RETRIES); do
+              echo "Attempt $i: Checking API for matching commit ID..."
+
+              REVISION=$(curl --silent --location 'https://gcpotel.atlan.com/api/meta/admin/version' \
+                --header "Authorization: Bearer $(curl --silent --location 'https://gcpotel.atlan.com/auth/realms/default/protocol/openid-connect/token' \
+                  --header 'Content-Type: application/x-www-form-urlencoded' \
+                  --data-urlencode 'client_id=atlan-argo' \
+                  --data-urlencode 'grant_type=client_credentials' \
+                  --data-urlencode "client_secret=${{ secrets.ATLAN_CLIENT_SECRET }}" | jq -r '.access_token')" | jq -r '.Revision' | cut -c1-7)
+
+              echo "Fetched Revision: $REVISION"
+              echo "Expected Commit ID: $COMMIT_ID"
+
+              if [[ "$REVISION" == "$COMMIT_ID" ]]; then
+                  echo "✅ Revision matches commit ID! Proceeding to the next step..."
+                  exit 0
+              fi
+
+              echo "🔄 No match yet. Retrying in $SLEEP_TIME seconds..."
+              sleep $SLEEP_TIME
+          done
+
+          echo "❌ ERROR: Max retries reached. Commit ID did not match the revision."
+          exit 1
 
   run-integration-tests:
     runs-on: ubuntu-latest
-    #    needs: build
     steps:
       - name: Checkout Java SDK Repo
         uses: actions/checkout@v4
@@ -33,7 +67,6 @@ jobs:
           arguments: assemble shadowJar test
 
   list-integration-tests:
-    #    needs: run-integration-tests
     runs-on: ubuntu-latest
     outputs:
       tests: ${{ steps.test-files.outputs.tests }}
@@ -78,13 +111,15 @@ jobs:
       - name: Integration tests
         uses: burrunan/gradle-cache-action@v1
         env:
-          ATLAN_BASE_URL: ${{ secrets.ATLAN_BASE_URL }}
-          ATLAN_API_KEY: ${{ secrets.TENANT_API_KEY }}
+            ATLAN_BASE_URL: "https://gcpotel.atlan.com/"
+            ATLAN_API_KEY: ${{ secrets.TENANT_API_KEY }}
         with:
           arguments: -PintegrationTests integration-tests:test --tests "com.atlan.java.sdk.${{ matrix.tests }}"
-          
+
       - if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.tests }}
-          path: atlan-java/integration-tests/${{ matrix.tests }}.log  # <-- CHANGED: Corrected log path
+          path: integration-tests/${{ matrix.tests }}.log
+
+
