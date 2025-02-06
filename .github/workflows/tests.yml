@@ -47,7 +47,6 @@ jobs:
           exit 1
 
   integration-test:
-    needs: run-integration-tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
