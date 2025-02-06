@@ -46,7 +46,7 @@ jobs:
           echo "❌ ERROR: Max retries reached. Commit ID did not match the revision."
           exit 1
 
-integration-test:
+  integration-test:
     needs: run-integration-tests
     runs-on: ubuntu-latest
     strategy:
@@ -72,8 +72,8 @@ integration-test:
       - name: Run Selected Integration Tests
         uses: burrunan/gradle-cache-action@v1
         env:
-            ATLAN_BASE_URL: "https://gcpotel.atlan.com/"
-            ATLAN_API_KEY: ${{ secrets.TENANT_API_KEY }}
+          ATLAN_BASE_URL: "https://gcpotel.atlan.com/"
+          ATLAN_API_KEY: ${{ secrets.TENANT_API_KEY }}
         with:
           arguments: -PintegrationTests integration-tests:test --tests "com.atlan.java.sdk.${{ matrix.tests }}"
 
