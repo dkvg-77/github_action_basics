@@ -19,8 +19,7 @@ jobs:
         with:
           repository: atlanhq/atlan-java
           ref: main
-          path: atlan-java  # <-- CHANGED: Specify path so it does not checkout into the default directory
-
+          
       - name: Set up JDK for SDK
         uses: actions/setup-java@v4
         with:
@@ -42,8 +41,7 @@ jobs:
         with:
           repository: atlanhq/atlan-java
           ref: main
-          path: atlan-java  # <-- CHANGED: Specify path to ensure correct directory structure
-
+          
       - name: List integration tests
         id: test-files
         run: |
@@ -68,7 +66,6 @@ jobs:
         with:
           repository: atlanhq/atlan-java
           ref: main
-          path: atlan-java  # <-- CHANGED: Ensure checkout into correct directory
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -83,8 +80,7 @@ jobs:
           ATLAN_API_KEY: ${{ secrets.TENANT_API_KEY }}
         with:
           arguments: -PintegrationTests integration-tests:test --tests "com.atlan.java.sdk.${{ matrix.tests }}"
-          working-directory: atlan-java  # <-- CHANGED: Ensure Gradle runs in the correct repo
-
+          
       - if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
