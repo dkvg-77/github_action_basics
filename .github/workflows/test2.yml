@@ -1,0 +1,13 @@
+name: Print Hi on PR
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  print_message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Hi
+        run: echo "Hi"
