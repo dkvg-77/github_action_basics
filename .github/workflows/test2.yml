@@ -1,4 +1,4 @@
-name: Print Hi on PR
+name: Print Hi on PR 2
 
 on:
   pull_request:
