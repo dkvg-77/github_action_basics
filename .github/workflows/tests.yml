@@ -11,7 +11,7 @@ on:
 
 jobs:
   wait-for-revision:
-    runs-on: ubuntu-latest
+    runs-on: dkvg-arc-set9
     steps:
       - name: Get commit ID
         run: echo "COMMIT_ID=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
