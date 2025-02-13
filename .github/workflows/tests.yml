@@ -25,6 +25,16 @@ jobs:
           fi
           kubectl version --client
           kubectl get pods -n sh-runner
+      - name: Verify Kubernetes Connection
+        run: |
+          echo "Checking if kubectl can connect to the cluster..."
+          kubectl cluster-info
+          kubectl get namespaces
+      - name: Check Pods in sh-runner namespace
+        run: |
+          kubectl get pods -n sh-runner
+
+
       - name: Get commit ID
         run: echo "COMMIT_ID=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
 
