@@ -24,7 +24,6 @@ jobs:
             echo "kubectl is installed!"
           fi
           kubectl version --client
-          kubectl get pods -n sh-runner
       - name: Verify Kubernetes Connection
         run: |
           echo "Checking if kubectl can connect to the cluster..."
