@@ -13,6 +13,18 @@ jobs:
   wait-for-revision:
     runs-on: dkvg-arc-set9
     steps:
+      - name: Verify kubectl Installation
+        run: |
+          if ! command -v kubectl &> /dev/null; then
+            echo "kubectl is not installed! Installing..."
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin/
+          else
+            echo "kubectl is installed!"
+          fi
+          kubectl version --client
+          kubectl get pods -n sh-runner
       - name: Get commit ID
         run: echo "COMMIT_ID=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
 
