@@ -27,7 +27,6 @@ jobs:
       - name: Verify Kubernetes Connection
         run: |
           echo "Checking if kubectl can connect to the cluster..."
-          kubectl cluster-info
           kubectl get namespaces
       - name: Check Pods in sh-runner namespace
         run: |
